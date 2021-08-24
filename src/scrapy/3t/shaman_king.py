@@ -6,9 +6,9 @@ from pipelines import ScrapyPipeline
 
 
 class OnePieceCrawlers(scrapy.Spider):
-    name = 'one_piece_list'
+    name = 'shaman_king'
     start_urls = [
-        'http://truyentranhtuan.com/one-piece/'
+        'http://truyentranhtuan.com/shaman-king/'
     ]
 
     def parse(self, response):
