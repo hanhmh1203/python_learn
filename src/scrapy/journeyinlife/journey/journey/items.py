@@ -3,10 +3,15 @@
 # See documentation in:
 # https://docs.scrapy.org/en/latest/topics/items.html
 
-import scrapy
 
-
-class JourneyItem(scrapy.Item):
+class JourneyItem:
     # define the fields for your item here like:
     # name = scrapy.Field()
-    pass
+    key = ''
+    title = ''
+    link = ''
+    thumb = ''
+    image = ''
+    content = []
+    str_content = ''
+    example = ''
