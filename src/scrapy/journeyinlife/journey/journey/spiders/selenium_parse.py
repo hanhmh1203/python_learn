@@ -39,6 +39,12 @@ class JourneyParse:
             self.worksheet['E1'].value = 'Link'
             self.worksheet['F1'].value = 'Image_Link'
             self.worksheet['G1'].value = 'thumb_Link'
+            self.__save_ex()
+        # self.workbook.save(f'journey_in_life_{self.page_total}.xlsx')
+
+        print(str(self.worksheet.max_row))
+
+    def __save_ex(self):
         self.workbook.save(f'journey_in_life_{self.page_total}.xlsx')
 
     def __init__(self):
@@ -48,6 +54,15 @@ class JourneyParse:
         options.add_argument('--headless')
         self.driver = webdriver.Chrome('./chromedriver', chrome_options=options)
 
+    def get_data_excel(self):
+        for i in range(1210, 2400):  # range(self.worksheet.max_row):
+
+            start_time = time.time()
+            row_number = i + 2
+            print(self.worksheet[f'A{row_number}'].value)
+            print(self.worksheet[f'C{row_number}'].value)
+            self.parse_detail_url(self.worksheet[f'E{row_number}'].value, row_number)
+            print("--- %s seconds ---" % (time.time() - start_time))
 
     def parse_list_soup(self):
         start_time = time.time()
@@ -64,9 +79,6 @@ class JourneyParse:
 
         for i in list_phrase:
             item_journey = JourneyItem()
-            # a = i.find('a')
-            # link = a.get('href')
-            # img = a.find('img').get('data-src')
             item_journey.link = i.find('a').get('href')
             item_journey.thumb = i.find('a').find('img').get('data-src')
             title = i.find('div', class_='title').text
@@ -83,7 +95,6 @@ class JourneyParse:
         if self.page_number < self.page_total:
             self.page_number += 1
             self.parse_list_soup()
-
 
     # def tag_content(self, tag):
     #     return tag['class'] == 'col-md-4' and tag.parent['class'] == 'row'
@@ -102,6 +113,25 @@ class JourneyParse:
             # item_journey.content.append(text.text)
 
         print(item_journey.title)
+
+    def parse_detail_url(self, url: str, row_number: int):
+        self.driver.get(url)
+        print(f"url: {url}")
+        page_source = self.driver.page_source
+        soup = BeautifulSoup(page_source, 'lxml')
+        page = soup.find('div', class_='entry-body')
+        if page is None:
+            return 
+        image = page.find('img').get('src')
+        texts = page.findAll('div', {'style': 'text-align: justify;'})
+        str_content = ''
+        for text in texts:
+            str_content = f'{str_content} \n ' \
+                          f'{text.text}'
+
+        self.worksheet[f'D{row_number}'].value = str_content
+        self.worksheet[f'F{row_number}'].value = image
+        self.__save_ex()
 
     def close(self):
         self.workbook.save(f'journey_in_life_{self.page_total}.xlsx')
@@ -122,15 +152,18 @@ class JourneyParse:
             self.worksheet[f'F{row_number}'].value = list_item[i].image
             self.worksheet[f'G{row_number}'].value = list_item[i].thumb
             self.count += 1
-        self.workbook.save(f'journey_in_life_{self.page_total}.xlsx')
+        # self.workbook.save(f'journey_in_life_{self.page_total}.xlsx')
+        self.__save_ex()
 
 
 if __name__ == '__main__':
     parse = JourneyParse()
-    try:
-        parse.parse_list_soup()
-    except:
-        # parse.close()
-        print("Caught it!")
-    finally:
-        parse.close()
+    parse.init_excel()
+    parse.get_data_excel()
+    # try:
+    #     parse.parse_list_soup()
+    # except:
+    #     # parse.close()
+    #     print("Caught it!")
+    # finally:
+    parse.close()
