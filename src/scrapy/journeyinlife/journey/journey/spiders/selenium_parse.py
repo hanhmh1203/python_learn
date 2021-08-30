@@ -9,6 +9,7 @@ from bs4 import BeautifulSoup
 from src.scrapy.journeyinlife.journey.journey.items import JourneyItem
 import xlsxwriter
 import hashlib
+import db_cassandra
 
 time_loading = 2
 
@@ -47,7 +48,9 @@ class JourneyParse:
     def __save_ex(self):
         self.workbook.save(f'journey_in_life_{self.page_total}.xlsx')
 
-    def __init__(self):
+
+
+    def init_selenium(self):
         options = webdriver.ChromeOptions()
         options.add_argument('--ignore-certificate-errors')
         options.add_argument('--incognito')
@@ -55,7 +58,7 @@ class JourneyParse:
         self.driver = webdriver.Chrome('./chromedriver', chrome_options=options)
 
     def get_data_excel(self):
-        for i in range(1210, 2400):  # range(self.worksheet.max_row):
+        for i in range(1378, 2400):  # range(self.worksheet.max_row):
 
             start_time = time.time()
             row_number = i + 2
@@ -63,6 +66,29 @@ class JourneyParse:
             print(self.worksheet[f'C{row_number}'].value)
             self.parse_detail_url(self.worksheet[f'E{row_number}'].value, row_number)
             print("--- %s seconds ---" % (time.time() - start_time))
+
+    def get_data_excel_to_list(self):
+        list_jn = []
+        for i in range(1, 1000):  # range(self.worksheet.max_row):
+
+            start_time = time.time()
+            row_number = i + 2
+            print(self.worksheet[f'A{row_number}'].value)
+            print(self.worksheet[f'C{row_number}'].value)
+            item_ = JourneyItem()
+            item_.key = self.worksheet[f'B{row_number}'].value
+            item_.title = self.worksheet[f'B{row_number}'].value
+            item_.link = self.worksheet[f'E{row_number}'].value
+            item_.thumb = self.worksheet[f'G{row_number}'].value
+            list_jn.append(item_)
+            # self.worksheet[f'A{row_number}'].value = 'STT'
+            # self.worksheet[f'B{row_number}'].value = 'Key'
+            # self.worksheet[f'C{row_number}'].value = 'Title'
+            # self.worksheet[f'D{row_number}'].value = 'Meaning'
+            # self.worksheet[f'E{row_number}'].value = 'Link'
+            # self.worksheet[f'F{row_number}'].value = 'Image_Link'
+            # self.worksheet[f'G{row_number}'].value = 'thumb_Link'
+        return list_jn
 
     def parse_list_soup(self):
         start_time = time.time()
@@ -121,7 +147,7 @@ class JourneyParse:
         soup = BeautifulSoup(page_source, 'lxml')
         page = soup.find('div', class_='entry-body')
         if page is None:
-            return 
+            return
         image = page.find('img').get('src')
         texts = page.findAll('div', {'style': 'text-align: justify;'})
         str_content = ''
@@ -136,8 +162,9 @@ class JourneyParse:
     def close(self):
         self.workbook.save(f'journey_in_life_{self.page_total}.xlsx')
         self.workbook.close()
-        self.driver.close()
-        self.driver.quit()
+        if self.driver is not None:
+            self.driver.close()
+            self.driver.quit()
 
     def writer_csv(self, list_item):
         print('writer excel')
@@ -159,7 +186,11 @@ class JourneyParse:
 if __name__ == '__main__':
     parse = JourneyParse()
     parse.init_excel()
-    parse.get_data_excel()
+    list_jn = parse.get_data_excel_to_list()
+    db = db_cassandra.db_cassandra()
+    db.insert_db(list_jn)
+
+    # parse.get_data_excel()
     # try:
     #     parse.parse_list_soup()
     # except:
