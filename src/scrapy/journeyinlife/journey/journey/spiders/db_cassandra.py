@@ -30,35 +30,48 @@ class db_cassandra:
                     title text,
                     link text,
                     thumb text,
+                    content text,
+                    image_url text,
                     PRIMARY KEY (key)
                 )
                 """)
 
     query_insert = SimpleStatement("""
-                  INSERT INTO JOURNEY (key, title, link, thumb)
-                  VALUES (%(key)s, %(title)s, %(link)s, %(thumb)s)
+                  INSERT INTO JOURNEY (key, title, link, thumb, content, image_url)
+                  VALUES (%(key)s, %(title)s, %(link)s, %(thumb)s, %(content)s, %(image_url)s)
                   """, consistency_level=cassandra.ConsistencyLevel.ONE)
 
     def insert_db(self, items):
         for journey in items:
+
+            if journey is None or journey.key is None:
+                return
+            print(f'insert {journey.title}')
             self.session.execute(self.query_insert,
-                                 dict(key=journey.key, title=journey.title, link=journey.link, thumb=journey.thumb))
+                                 dict(key=journey.key,
+                                      title=journey.title,
+                                      link=journey.link,
+                                      thumb=journey.thumb,
+                                      content=journey.str_content,
+                                      image_url=journey.image))
 
     def get_db(self):
-        future = self.session.execute_async("SELECT * FROM JOURNEY")
+        future = self.session.execute_async("SELECT * FROM JOURNEY WHERE content ='' limit 10 ALLOW FILTERING")
         try:
             rows = future.result()
+            return rows
         except Exception:
             log.exception("Error reading rows:")
-            return
+            return None
 
-        for row in rows:
-            print('\t'.join(row))
-            # log.info('\t'.join(row))
-
+        # for row in rows:
+        #     print('\t'.join(row))
+        #     # log.info('\t'.join(row))
+        # return rows
 
     def drop_keyspace(self):
-        self.session.execute("DROP KEYSPACE " + KEYSPACE)
+        pass
+        # self.session.execute("DROP KEYSPACE " + KEYSPACE)
 
 
 if __name__ == '__main__':

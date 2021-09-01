@@ -41,14 +41,11 @@ class JourneyParse:
             self.worksheet['F1'].value = 'Image_Link'
             self.worksheet['G1'].value = 'thumb_Link'
             self.__save_ex()
-        # self.workbook.save(f'journey_in_life_{self.page_total}.xlsx')
 
         print(str(self.worksheet.max_row))
 
     def __save_ex(self):
         self.workbook.save(f'journey_in_life_{self.page_total}.xlsx')
-
-
 
     def init_selenium(self):
         options = webdriver.ChromeOptions()
@@ -68,10 +65,8 @@ class JourneyParse:
             print("--- %s seconds ---" % (time.time() - start_time))
 
     def get_data_excel_to_list(self):
-        list_jn = []
-        for i in range(1, 1000):  # range(self.worksheet.max_row):
-
-            start_time = time.time()
+        list_jr = []
+        for i in range(1, self.worksheet.max_row):
             row_number = i + 2
             print(self.worksheet[f'A{row_number}'].value)
             print(self.worksheet[f'C{row_number}'].value)
@@ -80,15 +75,8 @@ class JourneyParse:
             item_.title = self.worksheet[f'B{row_number}'].value
             item_.link = self.worksheet[f'E{row_number}'].value
             item_.thumb = self.worksheet[f'G{row_number}'].value
-            list_jn.append(item_)
-            # self.worksheet[f'A{row_number}'].value = 'STT'
-            # self.worksheet[f'B{row_number}'].value = 'Key'
-            # self.worksheet[f'C{row_number}'].value = 'Title'
-            # self.worksheet[f'D{row_number}'].value = 'Meaning'
-            # self.worksheet[f'E{row_number}'].value = 'Link'
-            # self.worksheet[f'F{row_number}'].value = 'Image_Link'
-            # self.worksheet[f'G{row_number}'].value = 'thumb_Link'
-        return list_jn
+            list_jr.append(item_)
+        return list_jr
 
     def parse_list_soup(self):
         start_time = time.time()
@@ -159,6 +147,30 @@ class JourneyParse:
         self.worksheet[f'F{row_number}'].value = image
         self.__save_ex()
 
+    def parse_detail_jr(self, jr: JourneyItem) -> JourneyItem:
+        self.driver.get(jr.link)
+        print(f"url: {jr.link}")
+        page_source = self.driver.page_source
+        soup = BeautifulSoup(page_source, 'lxml')
+        page = soup.find('div', class_='entry-body')
+        if page is None:
+            jr.content = "content_empty"
+            return jr
+        img = page.find('img')
+        if img is not None:
+            image = img.get('src')
+            jr.image = image
+        texts = page.findAll('div', {'style': 'text-align: justify;'})
+        str_content = ''
+        for text in texts:
+            print(text.text)
+            str_content = f'{str_content} \n ' \
+                          f'{text.text}'
+        if str_content == '':
+            str_content = 'content_empty'
+        jr.str_content = str_content
+        return jr
+
     def close(self):
         self.workbook.save(f'journey_in_life_{self.page_total}.xlsx')
         self.workbook.close()
@@ -182,13 +194,40 @@ class JourneyParse:
         # self.workbook.save(f'journey_in_life_{self.page_total}.xlsx')
         self.__save_ex()
 
+    def get_db_and_scrawl(self):
+        db = db_cassandra.db_cassandra()
+        loop = True
+        while loop:
+            rows = db.get_db()
+            if rows is None:
+                loop = False
+            else:
+                for row in rows:
+                    jr = self.__parse_from_db(row)
+                    db.insert_db([jr])
+
+    # INSERT INTO JOURNEY (key, title, link, thumb, content, image_url)
+    def __parse_from_db(self, row) -> JourneyItem:
+        jr = JourneyItem()
+        jr.key = row.key
+        jr.title = row.title
+        jr.link = row.link
+        jr.thumb = row.thumb
+        return self.parse_detail_jr(jr)
+
 
 if __name__ == '__main__':
+
     parse = JourneyParse()
-    parse.init_excel()
-    list_jn = parse.get_data_excel_to_list()
-    db = db_cassandra.db_cassandra()
-    db.insert_db(list_jn)
+    parse.init_selenium()
+    # parse.init_excel()
+    # list_jn = parse.get_data_excel_to_list()
+
+    parse.get_db_and_scrawl()
+    # db = db_cassandra.db_cassandra()
+    # db.create_table_phrase()
+    # db.insert_db(list_jn)
+    # db.get_db()
 
     # parse.get_data_excel()
     # try:
