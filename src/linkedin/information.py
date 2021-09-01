@@ -1,3 +1,3 @@
 # linkedin
 username = 'hanhmh1203@gmail.com'
-password = '12'
+password = '@1203'
