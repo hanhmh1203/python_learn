@@ -41,6 +41,11 @@ class db_cassandra:
                   VALUES (%(key)s, %(title)s, %(link)s, %(thumb)s, %(content)s, %(image_url)s)
                   """, consistency_level=cassandra.ConsistencyLevel.ONE)
 
+    query_update = SimpleStatement("""
+                      UPDATE JOURNEY set title =  %(title)s
+                      WHERE key =  %(key)s
+                      """, consistency_level=cassandra.ConsistencyLevel.ONE)
+
     def insert_db(self, items):
         for journey in items:
 
@@ -55,6 +60,18 @@ class db_cassandra:
                                       content=journey.str_content,
                                       image_url=journey.image))
 
+    def update_title_db(self, items):
+        for journey in items:
+
+            if journey is None or journey.key is None:
+                return
+            print(f'update {journey.title}')
+            print(f'update key {journey.key}')
+            self.session.execute(self.query_update,
+                                 dict(title=journey.title,
+                                      key=journey.key
+                                      ))
+
     def get_db(self):
         future = self.session.execute_async("SELECT * FROM JOURNEY WHERE content ='' limit 10 ALLOW FILTERING")
         try:
@@ -64,10 +81,15 @@ class db_cassandra:
             log.exception("Error reading rows:")
             return None
 
-        # for row in rows:
-        #     print('\t'.join(row))
-        #     # log.info('\t'.join(row))
-        # return rows
+    def get_db_300(self):
+        get_db = self.session.execute_async(
+            "SELECT * FROM JOURNEY ")
+        try:
+            rows = get_db.result()
+            return rows
+        except Exception:
+            log.exception("Error reading rows:")
+            return None
 
     def drop_keyspace(self):
         pass

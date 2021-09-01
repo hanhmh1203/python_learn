@@ -9,3 +9,6 @@ class linkedin_parser(BaseParser):
     def __init__(self):
         super().__init__()
         self.locator = locator
+
+    def login(self):
+        

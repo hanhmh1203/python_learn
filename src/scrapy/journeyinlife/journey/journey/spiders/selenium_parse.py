@@ -10,8 +10,10 @@ from src.scrapy.journeyinlife.journey.journey.items import JourneyItem
 import xlsxwriter
 import hashlib
 import db_cassandra
+from src.scrapy.journeyinlife.journey.journey.spiders.journey_sqlite import journey_sqlite
 
 time_loading = 2
+content_empty = 'content_empty'
 
 
 class JourneyParse:
@@ -72,7 +74,7 @@ class JourneyParse:
             print(self.worksheet[f'C{row_number}'].value)
             item_ = JourneyItem()
             item_.key = self.worksheet[f'B{row_number}'].value
-            item_.title = self.worksheet[f'B{row_number}'].value
+            item_.title = self.worksheet[f'C{row_number}'].value
             item_.link = self.worksheet[f'E{row_number}'].value
             item_.thumb = self.worksheet[f'G{row_number}'].value
             list_jr.append(item_)
@@ -154,7 +156,7 @@ class JourneyParse:
         soup = BeautifulSoup(page_source, 'lxml')
         page = soup.find('div', class_='entry-body')
         if page is None:
-            jr.content = "content_empty"
+            jr.content = content_empty
             return jr
         img = page.find('img')
         if img is not None:
@@ -215,18 +217,37 @@ class JourneyParse:
         jr.thumb = row.thumb
         return self.parse_detail_jr(jr)
 
+    def import_db_to_sqlite(self):
+        db = db_cassandra.db_cassandra()
+        db_sqlite = journey_sqlite()
+        loop = True
+        while loop:
+            rows = db.get_db_300()
+            if rows is None:
+                loop = False
+            else:
+                loop = False
+                for row in rows:
+                    if row.content != content_empty and row.content != '':
+                        print(f'insert to sqlite:\n {row.key}')
+                        db_sqlite.import_data(row)
+
+            db_sqlite.close()
+
 
 if __name__ == '__main__':
-
     parse = JourneyParse()
+    # parse.import_db_to_sqlite()
     parse.init_selenium()
+    parse.get_db_and_scrawl()
     # parse.init_excel()
     # list_jn = parse.get_data_excel_to_list()
 
-    parse.get_db_and_scrawl()
+    # parse.get_db_and_scrawl()
     # db = db_cassandra.db_cassandra()
     # db.create_table_phrase()
-    # db.insert_db(list_jn)
+    # list_jn = parse.get_data_excel_to_list()
+    # db.update_title_db(list_jn)
     # db.get_db()
 
     # parse.get_data_excel()
