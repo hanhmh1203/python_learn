@@ -1,5 +1,12 @@
+import time
+
 from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+
 import src
+
+action_delay_time = 2
+
 
 class BaseParser():
     driver = None
@@ -14,9 +21,25 @@ class BaseParser():
         options.add_argument('--headless')
         # self.driver = webdriver.Chrome('./chromedriver', chrome_options=options)
         self.driver = webdriver.Chrome('./chromedriver')
+        self.driver.implicitly_wait(20)
 
     def close(self):
         if self.driver is not None:
             self.driver.close()
             self.driver.quit()
 
+    def click_element_xpath(self, locator):
+        self.driver.find_element_by_xpath(locator).click()
+        time.sleep(action_delay_time)
+
+    def click_element_id(self, locator):
+        self.driver.find_element_by_id(locator).click()
+        time.sleep(action_delay_time)
+
+    def click_element_xpath_enter(self, locator):
+        self.driver.find_element_by_xpath(locator).send_keys(Keys.ENTER)
+        time.sleep(action_delay_time)
+
+    def send_key_by_xpath(self, locator, text):
+        self.driver.find_element_by_xpath(locator).send_keys(text)
+        time.sleep(action_delay_time)
