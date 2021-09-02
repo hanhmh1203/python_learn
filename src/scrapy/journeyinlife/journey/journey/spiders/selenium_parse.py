@@ -156,7 +156,7 @@ class JourneyParse:
         soup = BeautifulSoup(page_source, 'lxml')
         page = soup.find('div', class_='entry-body')
         if page is None:
-            jr.content = content_empty
+            jr.str_content = content_empty
             return jr
         img = page.find('img')
         if img is not None:
@@ -237,9 +237,9 @@ class JourneyParse:
 
 if __name__ == '__main__':
     parse = JourneyParse()
-    # parse.import_db_to_sqlite()
-    parse.init_selenium()
-    parse.get_db_and_scrawl()
+    parse.import_db_to_sqlite()
+    # parse.init_selenium()
+    # parse.get_db_and_scrawl()
     # parse.init_excel()
     # list_jn = parse.get_data_excel_to_list()
 
@@ -257,4 +257,4 @@ if __name__ == '__main__':
     #     # parse.close()
     #     print("Caught it!")
     # finally:
-    parse.close()
+    # parse.close()
