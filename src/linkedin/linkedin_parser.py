@@ -1,5 +1,6 @@
 from selenium import webdriver
 import time
+import pickle
 
 from selenium.webdriver.common.keys import Keys
 
@@ -23,6 +24,8 @@ class linkedin_parser(BaseParser):
         self.driver.find_element_by_id(self.locator.user_name_id).send_keys(information.username)
         self.driver.find_element_by_id(self.locator.password_id).send_keys(information.password)
         self.click_element_xpath('//*[@id="organic-div"]/form/div[3]/button')
+        time.sleep(5)
+        pickle.dump(self.driver.get_cookies(), open("cookies.pkl", "wb"))
 
     def search(self):
         # value = input('input search something: ')
@@ -38,8 +41,15 @@ class linkedin_parser(BaseParser):
         # self.click_element_xpath(self.locator.filter.xpath_locations_hochiminh)
         self.click_element_xpath(self.locator.filter.xpath_show_results)
 
+    def load_season(self):
+        self.driver.get(url=self.url)
+
+    def open_search(self):
+        self.driver.get(url=information.url_search)
+
 
 if __name__ == '__main__':
     parser = linkedin_parser()
-    parser.login()
-    parser.search()
+    # parser.login()
+    parser.open_search()
+    time.sleep(10)

@@ -16,11 +16,12 @@ class BaseParser():
 
     def init_selenium(self):
         options = webdriver.ChromeOptions()
-        options.add_argument('--ignore-certificate-errors')
-        options.add_argument('--incognito')
-        options.add_argument('--headless')
+        # options.add_argument('--ignore-certificate-errors')
+        # options.add_argument('--incognito')
+        # options.add_argument('--headless')
+        options.add_argument("user-data-dir=selenium")
         # self.driver = webdriver.Chrome('./chromedriver', chrome_options=options)
-        self.driver = webdriver.Chrome('./chromedriver')
+        self.driver = webdriver.Chrome('./chromedriver', chrome_options=options)
         self.driver.implicitly_wait(20)
 
     def close(self):
