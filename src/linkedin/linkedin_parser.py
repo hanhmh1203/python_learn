@@ -45,7 +45,22 @@ class linkedin_parser(BaseParser):
         self.driver.get(url=self.url)
 
     def open_search(self):
-        self.driver.get(url=information.url_search)
+        self.driver.get(url=self.locator.filter.url_search)
+        time.sleep(5)
+        els = self.get_elements_class_name('entity-result__image')
+        #
+        print(f'els size {len(els)}')
+        if len(els) > 0:
+            print(f'click image avg id{els[0].id}')
+            els[0].click()
+
+        # for i in range(3):
+        #     print('scroll')
+        #     self.scroll_to_down()
+        #     time.sleep(1)
+        #     print('click xpath')
+        #     self.click_element_class_name(self.locator.filter.class_name_button_next)
+        #     time.sleep(5)
 
 
 if __name__ == '__main__':
